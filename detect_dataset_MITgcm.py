@@ -9,42 +9,42 @@ from dataset import *
 from lkf_stats_tools import *
 import pickle
 #%% Logical Functions
-def create_var_files(IceDiags_path):
-    """
-    Reads the IceDiags binary files and returns SIuice, SIvice and SIarea binary files.
-    IceDiags_path: path to the binary IceDiags files
-    """
-    output_files = [ifile for ifile in os.listdir(IceDiags_path) if ifile.startswith('IceDiags') and ifile.endswith('.data')]
-    output_files.sort()
-    for i in range (len(output_files)) :
-        ice_diags = xmitgcm.open_mdsdataset(IceDiags_path, prefix="IceDiags", iters=output_files[i].split('.')[1])
-        
-        SIarea = ice_diags["SIarea"]
-        SIuice = ice_diags["SIuice"]
-        SIvice = ice_diags["SIvice"]
-        
-        # Convertir les DataArrays en tableaux NumPy
-        SIarea_np = SIarea.values
-        SIuice_np = SIuice.values
-        SIvice_np = SIvice.values
-        
-        # Vérifier l'ordre des octets et le modifier si nécessaire
-        if SIarea_np.dtype.byteorder == '>':
-            SIarea_np = SIarea_np.byteswap().newbyteorder()
-        if SIuice_np.dtype.byteorder == '>':
-            SIuice_np = SIuice_np.byteswap().newbyteorder()
-        if SIvice_np.dtype.byteorder == '>':
-            SIvice_np = SIvice_np.byteswap().newbyteorder()
-    
-        # Spécifiez le chemin et le nom des fichiers de sortie pour SIarea, SIuice et SIvice
-        SIarea_output_file = IceDiags_path + "SIarea."+ output_files[i].split('.')[1] +".data"
-        SIuice_output_file = IceDiags_path + "SIuice."+ output_files[i].split('.')[1] +".data"
-        SIvice_output_file = IceDiags_path + "SIvice."+ output_files[i].split('.')[1] +".data"
-
-        # Maintenant, vous pouvez les écrire dans les fichiers de sortie respectifs
-        rw.writefield(SIarea_output_file, SIarea_np)
-        rw.writefield(SIuice_output_file, SIuice_np)
-        rw.writefield(SIvice_output_file, SIvice_np)
+#def create_var_files(IceDiags_path):
+#    """
+#    Reads the IceDiags binary files and returns SIuice, SIvice and SIarea binary files.
+#    IceDiags_path: path to the binary IceDiags files
+#    """
+#    output_files = [ifile for ifile in os.listdir(IceDiags_path) if ifile.startswith('IceDiags') and ifile.endswith('.data')]
+#    output_files.sort()
+#    for i in range (len(output_files)) :
+#        ice_diags = xmitgcm.open_mdsdataset(IceDiags_path, prefix="IceDiags", iters=output_files[i].split('.')[1])
+#        
+#        SIarea = ice_diags["SIarea"]
+#        SIuice = ice_diags["SIuice"]
+#        SIvice = ice_diags["SIvice"]
+#        
+#        # Convert DataArrays into NumPy array
+#        SIarea_np = SIarea.values
+#        SIuice_np = SIuice.values
+#        SIvice_np = SIvice.values
+#        
+#        # check the order of the octets anf mofify if needed
+#        if SIarea_np.dtype.byteorder == '>':
+#            SIarea_np = SIarea_np.byteswap().newbyteorder()
+#        if SIuice_np.dtype.byteorder == '>':
+#            SIuice_np = SIuice_np.byteswap().newbyteorder()
+#        if SIvice_np.dtype.byteorder == '>':
+#            SIvice_np = SIvice_np.byteswap().newbyteorder()
+#    
+#        # Create an output path for the new files SIarea, SIuice, and SIvice
+#        SIarea_output_file = IceDiags_path + "SIarea."+ output_files[i].split('.')[1] +".data"
+#        SIuice_output_file = IceDiags_path + "SIuice."+ output_files[i].split('.')[1] +".data"
+#        SIvice_output_file = IceDiags_path + "SIvice."+ output_files[i].split('.')[1] +".data"
+#
+#        # Write in the output files
+#        rw.writefield(SIarea_output_file, SIarea_np)
+#        rw.writefield(SIuice_output_file, SIuice_np)
+#        rw.writefield(SIvice_output_file, SIvice_np)
 
 def compute_strains(dxC,dyC,dyG,dxG, U, V, A):
     """
@@ -236,7 +236,7 @@ use_SIshear = False # True if you want to use the SIshear output files (recommen
 
 for simu in simus :
     output_dir = root + simu + '/' # path to the MITgcm output files
-    create_var_files(output_dir) # Createds SIuice, SIvice, SIarea files from IceDiags files
+#    create_var_files(output_dir) # Createds SIuice, SIvice, SIarea files from IceDiags files (Not needed, open_mdsdataset opens IceDiags)
     ds = open_mdsdataset(output_dir)
 
     # Compute div, shr and vor
