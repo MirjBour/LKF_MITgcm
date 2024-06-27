@@ -17,7 +17,7 @@ The primary script in this repository is `detect_dataset_MITgcm.py`, which utili
 - `rw.py`: Read/write utilities.
 - `tracking.py`: Functions for tracking LKFs over time.
 - `_dir_filter.py`: Directory filtering utilities.
-- `PLOT.ipynb`: Jupyter notebook for post processing lkf_dataset object statistics and plot figures from [my internship report](/rapport_de_Stage_corrige.pdf)
+- `PLOT.ipynb`: Jupyter notebook for post processing lkf_dataset object statistics and plot figures from [my internship report](/Report_LEMAIRE_2024.pdf)
 
 ## Getting Started
 
