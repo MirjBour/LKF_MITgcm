@@ -36,6 +36,7 @@ The primary script in this repository is `detect_dataset_MITgcm.py`, which utili
 
 This work is based on the LKF detection methods developed by Nils Hutter. Visit the [lkf_tools repository](https://github.com/nhutter/lkf_tools) and  [lkf_mitgcm2km repository](https://github.com/nhutter/lkf_mitgcm2km/tree/main) for more information.
 
+The main MITgcm webpage can be found [here](https://mitgcm.readthedocs.io/en/latest/).
 ## Contact
 
 For any questions or issues, please open an issue on this repository or contact [Eva Lemaire](eva.lemaire11@gmail.com).
