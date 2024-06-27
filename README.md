@@ -32,13 +32,9 @@ The primary script in this repository is `detect_dataset_MITgcm.py`, which utili
 - Python 3.x
 - Required Python packages (e.g., NumPy, SciPy, etc.)
 
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
 ## Acknowledgments
 
-This work is based on the LKF detection methods developed by Nils Hutter. Visit the [lkf_tools repository](https://github.com/nhutter/lkf_tools) and  [lkf MITgcm 2 km repository]((https://github.com/nhutter/lkf_mitgcm2km/tree/main)) for more information.
+This work is based on the LKF detection methods developed by Nils Hutter. Visit the [lkf_tools repository](https://github.com/nhutter/lkf_tools) and  [lkf MITgcm 2 km repository](https://github.com/nhutter/lkf_mitgcm2km/tree/main) for more information.
 
 ## Contact
 
