@@ -38,5 +38,5 @@ This work is based on the LKF detection methods developed by Nils Hutter. Visit 
 
 ## Contact
 
-For any questions or issues, please open an issue on this repository or contact eva.lemaire11@gmail.com.
+For any questions or issues, please open an issue on this repository or contact [Eva Lemaire](eva.lemaire11@gmail.com).
 
