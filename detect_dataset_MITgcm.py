@@ -219,12 +219,12 @@ def gen_lkf_dataset(root,simu,datatype,mask_rgps=False):
         lkf.track_lkfs(force_recompute=True)
         lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
                                 datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
-    #lkf_data.gen_length()
-    #lkf_data.gen_density()
-    #lkf_data.gen_curvature()
-    #lkf_data.gen_lifetime()
+    #lkf.gen_length()
+    #lkf.gen_density()
+    #lkf.gen_curvature()
+    #lkf.gen_lifetime()
     lkf.gen_intersection()
-    #lkf_data.gen_growthrate()
+    #lkf.gen_growthrate()
     with open(f"{output_path}/MITgcm_4km_{simu[4:]}/object_lkf_{simu[4:]}.pkl"  , 'wb') as f:
         pickle.dump(lkf, f)
     return lkf
