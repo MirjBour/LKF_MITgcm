@@ -215,6 +215,7 @@ def gen_lkf_dataset(root,simu,datatype,mask_rgps=False):
         nc_path = root + simu + '/MITgcm_4km_'+ simu[4:] + '.nc'
         output_path = root + simu +'/Dataset_Detected_LKFs'
         lkf = process_dataset(nc_path, output_path = output_path)
+        lkf.detect_lkfs()
         lkf.track_lkfs(force_recompute=True)
         lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
                                 datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
