@@ -110,6 +110,7 @@ def compute_strains(dxC,dyC,dyG,dxG, U, V, A):
             div[day,:,:] = (e11+e22) * 24. * 3600. # units from s^-1 to day ^-1
             shr[day,:,:] = np.sqrt((e11-e22)**2+4*e12c**2) * 24. * 3600.
             vor[day,:,:] =  0.5*(dudy-dvdx) * 3600. *24.
+
     return div, vor, shr
 
 def read_binary_file(file_path, shape, dtype='>f4'):
@@ -181,9 +182,12 @@ def create_nc_file(a_ice_int, h_ice_int, u_ice_int, v_ice_int, shr_ice_int, div_
     h[:,:,:] = h_ice_int
     u[:,:,:] = u_ice_int
     v[:,:,:] = v_ice_int
-    shr[:,1:-1,1:-1] = shr_ice_int
+ #   shr[:,1:-1,1:-1] = shr_ice_int
     div[:,1:-1,1:-1] = div_ice_int
     vor[:,:-1,:-1] = vor_ice_int
+    shr[:,:,:] = shr_ice_int
+ #   div[:,:,:] = div_ice_int
+ #   vor[:,:,:] = vor_ice_int
     lon[:,:] = int_lons
     lat[:,:] = int_lats
     #dxu[:,:-1] = int_dxu
@@ -200,51 +204,87 @@ def gen_lkf_dataset(root,simu,datatype,mask_rgps=False):
     return : lkf dataset object
     """
     if mask_rgps == True :
-        nc_path = root + simu + '/MITgcm_4km_'+ simu[4:] + '.nc'
+        #nc_path = root + simu + '/MITgcm_4km_'+ simu[4:] + '.nc'
+        nc_path = root + simu + '/MITgcm_2km_'+ simu[4:] + '.nc'
         output_path = root + simu +'/Dataset_Detected_LKFs'
+        #lkf = process_dataset(nc_path, output_path = output_path)
+
         lkf = process_dataset(nc_path, output_path = output_path)
+
         lkf.detect_lkfs()
-        lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        #lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        #                        datatype, ['2008'], simu, read_tracking = False, mask_rgps = mask_rgps)
+        lkf = lkf_dataset(True, output_path + '/MITgcm_2km_' + simu[4:] + '/', output_path + '/MITgcm_2km_' + simu[4:] + '/',
                                 datatype, ['2008'], simu, read_tracking = False, mask_rgps = mask_rgps)
         lkf = process_dataset(nc_path,
                                     output_path = output_path)
         lkf.track_lkfs(force_recompute=True)
-        lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        #lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        #                        datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
+        lkf = lkf_dataset(True, output_path + '/MITgcm_2km_' + simu[4:] + '/', output_path + '/MITgcm_2km_' + simu[4:] + '/',
                                 datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
     else :
-        nc_path = root + simu + '/MITgcm_4km_'+ simu[4:] + '.nc'
+        #nc_path = root + simu + '/MITgcm_4km_'+ simu[4:] + '.nc'
+        print("6.1")
+        nc_path = root + simu + '/MITgcm_2km_'+ simu[4:] + '.nc'
+        print("6.2")
         output_path = root + simu +'/Dataset_Detected_LKFs'
+        print("6.3")
         lkf = process_dataset(nc_path, output_path = output_path)
-        lkf.track_lkfs(force_recompute=True)
-        lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        print("6.4")
+        lkf.detect_lkfs(indexes=None,force_redetect=False)
+        print("6.5")
+        lkf.track_lkfs(force_recompute=False,mask_rgps= mask_rgps)
+        print("6.6")
+        #lkf = lkf_dataset(True, output_path + '/MITgcm_4km_' + simu[4:] + '/', output_path + '/MITgcm_4km_' + simu[4:] + '/',
+        #                        datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
+        lkf = lkf_dataset(True, output_path + '/MITgcm_2km_' + simu[4:] + '/', output_path + '/MITgcm_2km_' + simu[4:] + '/',
                                 datatype, ['2008'], simu, read_tracking = True, mask_rgps = mask_rgps)
-    #lkf_data.gen_length()
-    #lkf_data.gen_density()
-    #lkf_data.gen_curvature()
-    #lkf_data.gen_lifetime()
-    lkf.gen_intersection()
-    #lkf_data.gen_growthrate()
-    with open(f"{output_path}/MITgcm_4km_{simu[4:]}/object_lkf_{simu[4:]}.pkl"  , 'wb') as f:
+        print("6.7")
+    lkf.gen_length(write_pickle=False) #works if saving option is commented out
+    #lkf.gen_density() #lkf.m.xmin is missing
+    lkf.gen_curvature(write_pickle=False) #works if saving option is commented out
+    lkf.gen_lifetime(write_pickle=False) #works if saving option is commented out
+    lkf.gen_intersection(write_pickle=False) #is empty?
+    #lkf.gen_growthrate() #wrong compute_MHD
+    #with open(f"{output_path}/MITgcm_4km_{simu[4:]}/object_lkf_{simu[4:]}.pkl"  , 'wb') as f:
+    with open(f"{output_path}/MITgcm_2km_{simu[4:]}/object_lkf_{simu[4:]}.pkl"  , 'wb') as f:
+        print("6.9")
         pickle.dump(lkf, f)
+        print("6.10")
     return lkf
+    print("6.11")
 
 #%% Script
-root = '/scratch/users/evlema001/new_run/'
-simus = ['run_elip', 'run_elip1', 'run_elip2', 'run_elip3', 'run_mohr', 'run_tear', 'run_tem']
+#root = '/scratch/users/evlema001/new_run/'
+root = '/Users/mbourget/Desktop/MITgcm/benchmark/2km/'
+root = '/Volumes/mbourget/Desktop/paper-1/'
+#simus = ['run_elip', 'run_elip1', 'run_elip2', 'run_elip3', 'run_mohr', 'run_tear', 'run_tem']
+simus = ['meb_plante_0_7']
+simus = ['meb_timestep']
 lkf_simu={}
-use_SIshear = False # True if you want to use the SIshear output files (recommended), False if you want to compute shear from U and V 
+use_SIshear = True # True if you want to use the SIshear output files (recommended), False if you want to compute shear from U and V 
 
 for simu in simus :
     output_dir = root + simu + '/' # path to the MITgcm output files
+    print("1")
 #    create_var_files(output_dir) # Createds SIuice, SIvice, SIarea files from IceDiags files (Not needed, open_mdsdataset opens IceDiags)
     ds = open_mdsdataset(output_dir)
-
+    print("2")
     # Compute div, shr and vor
     (div,vor,shr) = compute_strains(ds.dxC.values,ds.dyC.values,ds.dyG.values,ds.dxG.values,ds.SIuice.values, ds.SIvice.values, ds.SIarea.values)
+    print("3")
     if use_SIshear :
         shr = ds.SIshear.values
-    lon,lat = get_lonlat_MITgcm(output_dir) # Get longitude and latitude from LONC.bin et LATC.bin
-    nc_name = root + simu + '/MITgcm_4km_'+ simu[4:] +'.nc' # Set the name of the netCDF output file
-    create_nc_file(ds.SIarea.values, ds.SIheff.values, ds.SIuice.values, ds.SIvice.values, shr, div, vor, lon, lat, #dxu, dyv, 
+    #lon,lat = get_lonlat_MITgcm(output_dir) # Get longitude and latitude from LONC.bin et LATC.bin
+    lon, lat = np.meshgrid(ds.XC.values, ds.YC.values)
+    #nc_name = root + simu + '/MITgcm_4km_'+ simu[4:] +'.nc' # Set the name of the netCDF output file
+    print("4")
+    nc_name = root + simu + '/MITgcm_2km_'+ simu[4:] +'.nc'
+    print("5")
+    create_nc_file(ds.SIarea.values, ds.SIheff.values, ds.SIuice.values, ds.SIvice.values, shr, div, vor, lon, lat,
                 len(ds.iter.values), nc_name )
-    gen_lkf_dataset(root,simu,'mitgcm_4km', mask_rgps=True) # Generate LKF dataset from nc file and compute LKF statistics (see lkf_stats_tools.py)
+    print("6")
+    #gen_lkf_dataset(root,simu,'lkf_4km', mask_rgps=True) # Generate LKF dataset from nc file and compute LKF statistics (see lkf_stats_tools.py)
+    gen_lkf_dataset(root,simu,'benchmark_2km', mask_rgps=False)
+    print("7")

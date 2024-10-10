@@ -283,7 +283,7 @@ def drift_estimate(lkf0_path,ncfile,mask,index_x,index_y,red_fac,
         lkf0 = read_lkf0
 
     if len(lkf0)==1:
-        lkf0 = [lkf0.squeeze()]
+        #lkf0 = [lkf0.squeeze()]
         lkf0_d = [lkf0[0]]
     else:
         lkf0_d = lkf0.copy()

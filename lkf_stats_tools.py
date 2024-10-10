@@ -18,7 +18,7 @@ from netCDF4 import Dataset, MFDataset
 import pickle
 from scipy.spatial import cKDTree
 from pyproj import Proj
-
+from tracking import compute_MHD_segment
 
 # Self-written functions
 from read_RGPS import *
@@ -157,19 +157,27 @@ class lkf_dataset(object):
         # Test for deformation rate output
         lkffile_list = [ifile for ifile in os.listdir(lkf_path) if ifile.startswith('lkf')]
         lkffile_list.sort()
-        print(lkf_path  + '/' + lkffile_list[0])
+        print(lkffile_list)
+        print(lkf_path + lkffile_list[0])
         if lkffile_list[0].endswith('.npy'):
-            test_lkf = np.load(lkf_path + '/' + lkffile_list[0], allow_pickle=True,encoding='bytes')
+            test_lkf = np.load(lkf_path + lkffile_list[0], allow_pickle=True,encoding='bytes')
         elif lkffile_list[0].endswith('.npz'):
-            test_lkf = np.load(lkf_path  + '/' + lkffile_list[0], allow_pickle=True,encoding='bytes')['lkf']
+            test_lkf = np.load(lkf_path + lkffile_list[0], allow_pickle=True,encoding='bytes')['lkf']
         elif lkffile_list[0].endswith('.pkl'):
             with open(lkf_path + lkffile_list[0],'rb') as f :
                 test_lkf = pickle.load(f)
+        if len(test_lkf) == 0:
+            with open(lkf_path + lkffile_list[1],'rb') as f :
+                test_lkf = pickle.load(f)            
 
+#        if test_lkf[0].shape[1]-1 == 6:
+#            self.indm0 = 6+1; self.indm1 = 7+1;
+#            self.indp0 = 8+1; self.indp1 = 9+1;
+#            self.indd0 = 4+1; self.indd1 = 5+1;
         if test_lkf[0].shape[1]-1 == 6:
-            self.indm0 = 6+1; self.indm1 = 7+1;
-            self.indp0 = 8+1; self.indp1 = 9+1;
-            self.indd0 = 4+1; self.indd1 = 5+1;
+            self.indm0 = 6-1; self.indm1 = 7-1;
+            self.indp0 = 8-1; self.indp1 = 9-1;
+            self.indd0 = 4-1; self.indd1 = 5-1;
         else:
             self.indm0 = 4; self.indm1 = 5;
             self.indp0 = 6; self.indp1 = 7;
@@ -265,7 +273,6 @@ class lkf_dataset(object):
             # Generate list of files
             lkffile_list = [ifile for ifile in os.listdir(new_dir) if ifile.startswith('lkf')]
             lkffile_list.sort()
-    
             # Initialize list for year
             lkf_data_year = []
             lkf_meta_year = []
@@ -285,7 +292,6 @@ class lkf_dataset(object):
     
             # Loop over files to read an process
             for it,lkffile in enumerate(lkffile_list):
-        
                 # Save meta information: start/end time, number features
                 if datatype == 'rgps':
                     startdate = (dt.date(int(lkffile[4:-15]),1,1)+
@@ -301,6 +307,12 @@ class lkf_dataset(object):
                 elif datatype == 'mitgcm_4km':
                     startdate = (dt.datetime(2007,12,31,0,0,0) + 
                                  dt.timedelta(days = int(lkffile[-7:-4])))
+                    enddate   = (dt.datetime(2007,12,31,0,0,0) + 
+                                 dt.timedelta(days = int(lkffile[-7:-4])+3))
+                elif datatype == 'benchmark_2km':
+                    startdate = (dt.datetime(2007,12,31,0,0,0) + 
+                                 dt.timedelta(days = int(lkffile[-7:-4])))
+                    print("start", int(lkffile[-7:-4]), "end", int(lkffile[-7:-4])+3)
                     enddate   = (dt.datetime(2007,12,31,0,0,0) + 
                                  dt.timedelta(days = int(lkffile[-7:-4])+3))
                     
@@ -339,7 +351,8 @@ class lkf_dataset(object):
                     lkf_meta_year.append(np.array([startdate,
                                                    enddate,
                                                    #lkfi.size]))
-                                                   (len(lkfi)*lkfi[0].size)]))
+                                                   #(len(lkfi)*lkfi[0].size)]))
+                                                   1]))
         
                 # Add projected coordinates
                 lkfim = []
@@ -449,11 +462,17 @@ class lkf_dataset(object):
 
 
     def gen_length(self,overwrite=False,write_pickle=True):
+        print("6.7.1")
         if self.length is None or overwrite:
+            print("6.7.2")
             self.length = lkf_lengths(self)
+            print("6.7.3")
             if write_pickle:
+                print("6.7.4")
                 with open(self.pickle, 'wb') as output_pkl:
+                    print("6.7.5")
                     pickle.dump(self, output_pkl, pickle.HIGHEST_PROTOCOL)
+                    print("6.7.6")
         else:
             print('Warning: length object exists already, to overwrite active overwrite=True option')
 
@@ -538,9 +557,9 @@ class lkf_dataset(object):
             self.gen_length(write_pickle=False)
             self.gen_lifetime(write_pickle=False)
             self.growthrate = lkf_growthrate(self)
-            if write_pickle:
-                with open(self.pickle, 'wb') as output_pkl:
-                    pickle.dump(self, output_pkl, pickle.HIGHEST_PROTOCOL)
+#            if write_pickle:
+#                with open(self.pickle, 'wb') as output_pkl:
+#                    pickle.dump(self, output_pkl, pickle.HIGHEST_PROTOCOL)
         else:
             print('Warning: growth rate object exists already, to overwrite active overwrite=True option')
 
@@ -619,19 +638,23 @@ class lkf_lengths:
     
         print("Compute length of segments")
         lkf_length = []
-
+        print(len(lkf.lkf_dataset[0]))
         for lkf_year in lkf.lkf_dataset:
+            #len(lkf_year) #timesteps given to detect
             len_year = []
             for lkf_day in lkf_year:
+                #len(lkf_day) #LKFs detected in timestep
                 len_day = []
                 for ilkf in lkf_day:
+                    #len(ilkf) #points per LKF
                     len_day.append(np.sum(np.sqrt(np.diff(ilkf[:,lkf.indm0])**2 +
                                                   np.diff(ilkf[:,lkf.indm1])**2)))
-
+                   # print(ilkf[0])
                 len_year.append(np.array(len_day)[np.isfinite(len_day)])
-
             lkf_length.append(len_year)
-        
+            print("lkf_length", len(lkf_length[0]), len(lkf_length), lkf_length[0])
+            print("lkf.indm0", lkf.indm0)
+            print("lkf.indm1", lkf.indm1)
         self.lkf_length = lkf_length
 
 
@@ -977,7 +1000,7 @@ class lkf_curvature:
                 curv_year.append(curv_day)
 
             lkf_curvature.append(curv_year)
-
+        print("curvature", len(lkf_curvature[0]), lkf_curvature)
         self.lkf_curvature = lkf_curvature
         
     
@@ -1088,6 +1111,19 @@ class lkf_intersection:
 
         self.years = lkf.years
     
+        if lkf.datatype == 'benchmark_2km':
+            grid_path = "lkf_path[:33]+ lkf_path.split('/')[5]+'/'"
+            red_fac = 1.
+            ncfile = lkf_path[:60]+ "MITgcm_2km_" + lkf_path[49:59] + ".nc"           
+            ncdata = Dataset(ncfile)
+            lon = ncdata.variables['ULON'][:,:]
+            lat  = ncdata.variables['ULAT'][:,:]
+            mask = ((((lon > -120) & (lon < 100)) & (lat >= 80)) |
+                    ((lon <= -120) & (lat >= 70)) |
+                    ((lon >= 100) & (lat >= 70)))
+            #index_x = np.where(np.sum(mask[1:-1,1:-1],axis=0)>0)
+            #index_y = np.where(np.sum(mask[1:-1,1:-1],axis=1)>0)
+
         if lkf.datatype == 'mitgcm_2km':
             grid_path = '/work/ollie/nhutter/arctic_2km/run_cor_cs/'
             mask = mask_arcticbasin(grid_path,read_latlon)
@@ -1165,7 +1201,12 @@ class lkf_intersection:
                         ncfile = grid_path + 'MITgcm_4km_'+ grid_path.split('_')[-1][:-1] + '.nc'
                         data = Dataset(ncfile)
                         vor = data.variables['vor'][iday]
-                        
+                elif lkf.datatype == 'benchmark_2km':
+                    lkf_map = np.zeros(mask.shape)
+                    if self.use_vorticity:
+                        ncfile = lkf_path[:60]+ "MITgcm_2km_" + lkf_path[49:59] + ".nc"     
+                        data = Dataset(ncfile)
+                        vor = data.variables['vor'][iday]                        
                 elif lkf.datatype == 'mosaic':
                     lkf_map = np.zeros(lkf.lkf_meta[iyear][iday][-1])
                     if self.use_vorticity:
@@ -1319,7 +1360,8 @@ class lkf_intersection:
             lkf_interc_par.append(intc_par_year)
             if self.use_vorticity:
                 lkf_interc_type.append(intc_type_year)
-
+        print("lkf_interc", lkf_interc)
+        print("lkf_interc_par", lkf_interc_par)
         self.lkf_interc     = lkf_interc
         self.lkf_interc_par = lkf_interc_par
         if self.use_vorticity:
@@ -1746,16 +1788,12 @@ class lkf_lifetime:
 
         for iyear,lkf_year in enumerate(lkf.lkf_dataset):
             life_year = [np.ones((len(i_num_lkf),)) for i_num_lkf in lkf_year]
-            #print(len(lkf_year),len(lkf.lkf_track_data[iyear]))
-            #print(len(life_year))
             for it,itrack in enumerate(lkf.lkf_track_data[iyear]):
-                #print(it,itrack)
                 if itrack.size>0:
-                    #print(life_year[it+1].shape)
                     life_year[it+1][itrack[:,1].astype('int')] += life_year[it][itrack[:,0].astype('int')]
 
             lkf_lifetime.append(life_year)
-
+        print("lkf_lifetime", len(lkf_lifetime[0]), lkf_lifetime)
         #Save output
         self.lkf_lifetime = lkf_lifetime
 
@@ -1832,13 +1870,19 @@ class lkf_growthrate:
                                                                     lkf.lkf_dataset[iyear][iday+1][itrack[1].astype('int')][:,:2].T,
                                                                     overlap_thres=1.5,angle_thres=25,
                                                                     return_overlap=True,
-                                                                    return_overlaping_area=True,
-                                                                    mask_instead=True)
+                                                                    return_overlaping_area=True)#,
+                                                                   # mask_instead=True)
                         A = lkf.lkf_dataset[iyear][iday][itrack[0].astype('int')][:,lkf.indm0:lkf.indm1+1].copy()
                         B = lkf.lkf_dataset[iyear][iday+1][itrack[1].astype('int')][:,lkf.indm0:lkf.indm1+1].copy()
+                        print("A", type(A), A.shape, A)
+                        print("A_o", type(A_o), A_o.shape, A_o)
+                        A_o_int = A_o.astype(int)
 
-                        A[A_o,:] = np.nan; B[B_o,:] = np.nan;
-                        
+                        B_o_int = B_o.astype(int)
+                        print("A_o_int", type(A_o_int), A_o_int.shape, A_o_int)
+                        #A[A_o,:] = np.nan; B[B_o,:] = np.nan;
+                        A[A_o_int,:] = np.nan; B[B_o_int,:] = np.nan;
+
                         # Determine growth
                         growth_year[iday][itrack[1].astype('int')] = np.nansum(np.sqrt(np.sum(np.diff(A,axis=0)**2,axis=1)))
                         if np.isnan(growth_year[iday][itrack[1].astype('int')]):

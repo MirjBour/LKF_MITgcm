@@ -70,6 +70,15 @@ class process_dataset(object):
         self.red_fac = red_fac
         self.t_red = t_red
         
+        #Mehlmann Parameter
+        self.dog_thres = 0.1
+        self.dis_thres=4 
+        self.ellp_fac=3
+        self.angle_thres=35
+        self.eps_thres=0.5 
+        self.lmin=4
+        self.red_fac=1
+        self.t_red = 1
 
         # Read netcdf file
         if xarray is None:
@@ -92,14 +101,15 @@ class process_dataset(object):
         else:
             print("Warning: DXU and DYU are missing in netcdf file!")
             print("  -->  Compute dxu and dyu from lon,lat using SSMI projection")
-            m = mSSMI()
-            x,y = m(self.lon,self.lat)
+            #m = mSSMI()
+            #x,y = m(self.lon,self.lat)
+            x = self.lon.values
+            y = self.lat.values
             self.dxu = np.sqrt((x[:,1:]-x[:,:-1])**2 + (y[:,1:]-y[:,:-1])**2)
             self.dxu = np.concatenate([self.dxu,self.dxu[:,-1].reshape((self.dxu.shape[0],1))],axis=1)
             self.dyu = np.sqrt((x[1:,:]-x[:-1,:])**2 + (y[1:,:]-y[:-1,:])**2)
             self.dyu = np.concatenate([self.dyu,self.dyu[-1,:].reshape((1,self.dyu.shape[1]))],axis=0)
         
-
         # Generate Arctic Basin mask
         self.mask = ((((self.lon > -120) & (self.lon < 100)) & (self.lat >= 80)) |
                 ((self.lon <= -120) & (self.lat >= 70)) |
@@ -114,7 +124,7 @@ class process_dataset(object):
         
         :param indexes: time indexes that should be detected. If None all time steps are detected
         """
-        
+        print("t_red",self.t_red )
         # Check for already dectected features
         if force_redetect:
             self.lkf_filelist = [i for i in os.listdir(self.lkfpath) if i.startswith('lkf') and i.endswith('.pkl')]
@@ -170,7 +180,6 @@ class process_dataset(object):
                 
                 self.eps_tot_list.append(np.array(eps_tot))
     
-
             # Apply detection algorithm
             # Correct detection parameters for different resolution
             self.corfac = 12.5e3/np.mean([np.nanmean(self.dxu),np.nanmean(self.dyu)])/float(self.red_fac)
@@ -183,6 +192,13 @@ class process_dataset(object):
                                          ellp_fac=self.ellp_fac,angle_thres=self.angle_thres,
                                          eps_thres=self.eps_thres,lmin=self.lmin*self.corfac,
                                          max_ind=500*self.corfac,use_eps=True,skeleton_kernel=self.skeleton_kernel)
+
+            #lkf = lkf_detect_eps(self.eps_tot_list[0],max_kernel=self.max_kernel*(1+self.corfac)*0.5,
+            #                    min_kernel=self.min_kernel*(1+self.corfac)*0.5,
+            #                    dog_thres=self.dog_thres,dis_thres=self.dis_thres*self.corfac,
+            #                    ellp_fac=self.ellp_fac,angle_thres=self.angle_thres,
+            #                    eps_thres=self.eps_thres,lmin=self.lmin*self.corfac,
+            #                    skeleton_kernel=self.skeleton_kernel)
 
             # Save the detected features
 
@@ -208,7 +224,7 @@ class process_dataset(object):
             
             
             
-    def track_lkfs(self,indexes=None, force_recompute=False):
+    def track_lkfs(self,indexes=None, force_recompute=False, mask_rgps=False):
         """Function that generates tracking data set
         :param indexes: time indexes that should be tracked. If None all time steps are tracked.
         """
@@ -227,6 +243,7 @@ class process_dataset(object):
             self.lkf_filelist = [i for i in os.listdir(self.lkfpath) if i.startswith('Masked') and i.endswith('.pkl')]
         if mask_rgps == False :
             self.lkf_filelist = [i for i in os.listdir(self.lkfpath) if i.startswith('lkf') and i.endswith('.pkl')]
+        print(self.lkf_filelist)
         self.lkf_filelist.sort()
 
         # Determine which files have been already tracked
@@ -261,13 +278,22 @@ class process_dataset(object):
 
             # Read LKFs
             lkf1 = np.load(self.lkfpath.joinpath(self.lkf_filelist[ilkf+1]),allow_pickle=True)
+            #if len(lkf1.shape) != 1:
+            #    print("Super rare catch!")
+            #    lkf1_t = np.empty(len(lkf1), dtype=object)
+            #    for i in range(len(lkf1)):
+            #        lkf1_t[i] = lkf1[i]
+            #    lkf1 = lkf1_t
             # lkf1_l = []
             # for ilkf,iseg in enumerate(lkf1):
             #     lkf1_l.append(iseg[:,:2])
             lkf1_l = lkf1
+            if len(lkf1_l) == 0:
+                print("len(lkf) == 0")
             if len(lkf1_l)==1:
+                print("len(lkf) == 1")
+                #lkf1_l = [lkf1.squeeze()]
                 #lkf1_l = np.array([lkf1.squeeze()],dtype='object')
-                lkf1_l = [lkf1.squeeze()]
             for ilkf1,iseg in enumerate(lkf1):
                 lkf1_l[ilkf1] = iseg[:,:2]
 
